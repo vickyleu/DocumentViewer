@@ -55,5 +55,8 @@ internal actual fun DocumentPreviewer.documentView(document: FileImpl) {
     }
 }
 
-internal actual fun DocumentPreviewer.setupLicense(license:String, applicationContext: PlatformContext) {
+internal actual fun DocumentPreviewer.setupLicense(
+    license: String,
+    applicationContext: PlatformContextAlias
+) {
 }

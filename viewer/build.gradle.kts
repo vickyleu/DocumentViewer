@@ -10,6 +10,20 @@ plugins {
 }
 
 kotlin {
+    @Suppress("OPT_IN_USAGE")
+    compilerOptions {
+        freeCompilerArgs = listOf(
+            "-Xexpect-actual-classes", // remove warnings for expect classes
+            "-Xskip-prerelease-check",
+            "-opt-in=kotlinx.cinterop.ExperimentalForeignApi",
+            "-opt-in=org.jetbrains.compose.resources.InternalResourceApi",
+        )
+    }
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(libs.versions.jvmTarget.get()))
+    }
+    applyDefaultHierarchyTemplate()
+
     androidTarget {
         publishLibraryVariants("release")
     }
@@ -38,6 +52,8 @@ kotlin {
 //            implementation(project.dependencies.platform(libs.coil.bom))
             //put your multiplatform dependencies here
             implementation(libs.compose.filepicker)
+            implementation(libs.coil.core)
+            implementation(libs.coil.compose)
         }
         androidMain.get().apply {
             kotlin.srcDir("src/androidMain/kotlin")
@@ -60,8 +76,8 @@ android {
         minSdk = 34
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.toVersion(libs.versions.jvmTarget.get())
+        targetCompatibility = JavaVersion.toVersion(libs.versions.jvmTarget.get())
     }
 
     publishing{

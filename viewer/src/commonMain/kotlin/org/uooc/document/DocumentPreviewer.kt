@@ -13,12 +13,16 @@ object DocumentPreviewer {
 
     fun setup(license: String, applicationContext: PlatformContext) {
         println("Setting up document previewer with license $license")
-        setup(license, applicationContext)
+        setupLicense(license, applicationContext)
     }
 }
 
 @Composable
 internal expect fun DocumentPreviewer.documentView(document: FileImpl)
 
-internal expect fun DocumentPreviewer.setupLicense(license:String, applicationContext: PlatformContext)
+internal typealias PlatformContextAlias = coil3.PlatformContext
 
+internal expect fun DocumentPreviewer.setupLicense(
+    license: String,
+    applicationContext: PlatformContextAlias
+)

@@ -1,5 +1,6 @@
 package org.uooc.document
 
+import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
@@ -12,16 +13,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.viewinterop.AndroidView
-import coil3.PlatformContext
 import com.github.jing332.filepicker.base.FileImpl
 import com.tencent.tbs.reader.TbsFileInterfaceImpl
 import kotlinx.coroutines.launch
 
 
-internal actual fun DocumentPreviewer.setupLicense(license:String, applicationContext: PlatformContext) {
+internal actual fun DocumentPreviewer.setupLicense(
+    license: String,
+    applicationContext: PlatformContextAlias
+) {
+    val ctx = applicationContext as Context
     TbsFileInterfaceImpl.setLicenseKey(license)
-    TbsFileInterfaceImpl.fileEnginePreCheck(applicationContext)
-    val isInit = TbsFileInterfaceImpl.initEngine(applicationContext)
+    TbsFileInterfaceImpl.fileEnginePreCheck(ctx)
+    val isInit = TbsFileInterfaceImpl.initEngine(ctx)
 }
 
 
@@ -65,7 +69,13 @@ internal actual fun DocumentPreviewer.documentView(document: FileImpl) {
             return@Box
         }
         Text(
-            text = loadState.value.second,
+            text = loadState.value.second.let {
+                if(it.contains("未设置 licenseKey")){
+                    "tbs未充值,请联系管理员"
+                }else{
+                    it
+                }
+            },
             modifier = Modifier.align(Alignment.Center)
         )
 
