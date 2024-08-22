@@ -1,9 +1,10 @@
 package org.uooc.document
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import coil3.PlatformContext
 import com.github.jing332.filepicker.base.FileImpl
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSURL
@@ -24,12 +25,13 @@ internal actual fun DocumentPreviewer.documentView(document: FileImpl) {
         mutableStateOf(document)
     }
     val quickLookController = remember { QLPreviewController() }
-    LaunchedEffect(file.value) {
+    DisposableEffect(Unit) {
         quickLookController.dataSource =
             object : NSObject(), QLPreviewControllerDataSourceProtocol {
                 override fun numberOfPreviewItemsInPreviewController(controller: QLPreviewController): NSInteger {
                     return 1
                 }
+
                 override fun previewController(
                     controller: QLPreviewController,
                     previewItemAtIndex: NSInteger
@@ -41,12 +43,17 @@ internal actual fun DocumentPreviewer.documentView(document: FileImpl) {
                     }
                 }
             }
-        quickLookController.delegate = object :NSObject(), QLPreviewControllerDelegateProtocol {
+        quickLookController.delegate = object : NSObject(), QLPreviewControllerDelegateProtocol {
             override fun previewControllerDidDismiss(controller: QLPreviewController) {
                 println("Document preview dismissed")
             }
         }
         quickLookController.refreshCurrentPreviewItem()
         quickLookController.presentViewController(controller, true, null)
+        onDispose {
+        }
     }
+}
+
+internal actual fun DocumentPreviewer.setupLicense(license:String, applicationContext: PlatformContext) {
 }

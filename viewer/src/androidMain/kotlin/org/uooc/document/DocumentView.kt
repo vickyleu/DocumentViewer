@@ -90,4 +90,12 @@ class DocumentView @JvmOverloads constructor(
         val (rlt, msg) = completer.await()
         callback.invoke(rlt, msg)
     }
+
+    fun dispose() {
+        try {
+            val instance = TbsFileInterfaceImpl.getInstance()
+            instance.closeFileReader()
+        } catch (ignore: Exception) {
+        }
+    }
 }
