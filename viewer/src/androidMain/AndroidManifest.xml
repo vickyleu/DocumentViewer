@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <service
+            android:name="com.tencent.smtt.export.external.DexClassLoaderProviderService"
+            android:label="dexopt"
+            android:process=":dexopt" >
+        </service>
+        <activity android:name=".X5WebviewActivity"/>
+    </application>
+</manifest>

@@ -1,0 +1,44 @@
+[versions]
+agp = "8.5.2"
+android-minSdk = "24"
+android-compileSdk = "34"
+android-targetSdk = "34"
+
+kotlin = "2.0.20"
+compose-plugin = "1.7.0-alpha01"
+androidx-activityCompose = "1.9.1"
+jetpack-compose-bom = "2024.08.00"
+coroutines-bom = "1.8.1"
+coil-bom = "3.0.0-alpha06"
+jvmTarget = "17"
+
+dokka = "1.9.20"
+kotlinxDatetime = "0.6.0"
+navigationCompose = "2.7.7"
+
+accompanist = "0.34.0"
+
+[libraries]
+
+compose-filepicker = { module = "com.vickyleu.filepicker:filepicker", version = "1.0.2" }
+
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
+androidx-navigation-compose  = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "jetpack-compose-bom" }
+coroutines-bom = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-bom", version.ref = "coroutines-bom" }
+coil-bom = { module = "io.coil-kt.coil3:coil-bom", version.ref = "coil-bom" }
+
+coil-core = { module = "io.coil-kt.coil3:coil"}
+coil-compose = { module = "io.coil-kt.coil3:coil-compose"}
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
+
+accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist" }
+
+[plugins]
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "compose-plugin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
