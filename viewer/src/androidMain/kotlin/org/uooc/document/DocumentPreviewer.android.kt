@@ -6,31 +6,40 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.viewinterop.AndroidView
 import com.github.jing332.filepicker.base.FileImpl
 import com.tencent.tbs.reader.TbsFileInterfaceImpl
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
 
 internal actual fun DocumentPreviewer.setupLicense(
     license: String,
-    applicationContext: PlatformContextAlias
+    applicationContext: coil3.PlatformContext
 ) {
     val ctx = applicationContext as Context
     TbsFileInterfaceImpl.setLicenseKey(license)
     TbsFileInterfaceImpl.fileEnginePreCheck(ctx)
     val isInit = TbsFileInterfaceImpl.initEngine(ctx)
+    this.currentState = DocumentPreviewer.TMResult.fromCode(isInit)
+    println("TbsFileInterfaceImpl.initEngine: ${this.currentState.message}")
 }
 
 
 @Composable
-internal actual fun DocumentPreviewer.documentView(document: FileImpl) {
+internal actual fun DocumentPreviewer.documentView(
+    document: FileImpl,
+    callback: (Boolean, String) -> Unit
+) {
     val file = remember {
         mutableStateOf(document)
     }
@@ -56,7 +65,7 @@ internal actual fun DocumentPreviewer.documentView(document: FileImpl) {
 
         DisposableEffect(documentView.value) {
             scope.launch {
-                documentView.value?.setDocument(scope, file.value, density) { success, message ->
+                documentView.value?.setDocument(scope, file.value, density,this@documentView.currentState) { success, message ->
                     loadState.value = success to message
                 }
             }
@@ -65,19 +74,26 @@ internal actual fun DocumentPreviewer.documentView(document: FileImpl) {
             }
         }
 
-        if (loadState.value.first) {
-            return@Box
+        if (loadState.value.first.not()) {
+            Text(
+                text = loadState.value.second.let {
+                    if(it.contains("未设置 licenseKey")){
+                        "tbs未充值,请联系管理员"
+                    }else{
+                        it
+                    }
+                },
+                modifier = Modifier.align(Alignment.Center)
+            )
         }
-        Text(
-            text = loadState.value.second.let {
-                if(it.contains("未设置 licenseKey")){
-                    "tbs未充值,请联系管理员"
-                }else{
-                    it
+        LaunchedEffect(Unit) {
+            snapshotFlow { loadState.value }
+                .drop(1)
+                .distinctUntilChanged()
+                .collect{
+                    callback(it.first,it.second)
                 }
-            },
-            modifier = Modifier.align(Alignment.Center)
-        )
+        }
 
     }
 }

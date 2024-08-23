@@ -4,8 +4,10 @@ import org.jetbrains.dokka.DokkaDefaults.outputDir
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.library)
+    id(libs.plugins.kotlin.multiplatform.get().pluginId)
+    id(libs.plugins.android.library.get().pluginId)
+//    alias(libs.plugins.kotlin.multiplatform)
+//    alias(libs.plugins.android.library)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
 }
@@ -50,9 +52,11 @@ kotlin {
 //            implementation(compose.components.resources)
             implementation(project.dependencies.platform(libs.compose.bom))
             implementation(project.dependencies.platform(libs.coroutines.bom))
-//            implementation(project.dependencies.platform(libs.coil.bom))
+            implementation(project.dependencies.platform(libs.coil.bom))
             //put your multiplatform dependencies here
             implementation(libs.compose.filepicker)
+
+
             implementation(libs.coil.core)
             implementation(libs.coil.compose)
         }

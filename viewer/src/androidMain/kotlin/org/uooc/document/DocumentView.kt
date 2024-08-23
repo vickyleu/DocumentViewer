@@ -22,12 +22,15 @@ private val TAG = "DocumentPreviewer"
 class DocumentView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
 ) : FrameLayout(context, attrs) {
+    private lateinit var currentState: DocumentPreviewer.TMResult
     suspend fun setDocument(
         scope: CoroutineScope,
         file: FileImpl,
         density: Density,
+        currentState: DocumentPreviewer.TMResult,
         callback: (Boolean, String) -> Unit
     ) {
+        this.currentState = currentState
         val completer = CompletableDeferred<Pair<Boolean, String>>()
         scope.launch {
             withContext(Dispatchers.IO) {
@@ -43,8 +46,13 @@ class DocumentView @JvmOverloads constructor(
                         return@withContext
                     }
                 }
+                if(this@DocumentView.currentState.code!=0){
+                    completer.complete(false to "TbsFile Engine初始化失败")
+                    return@withContext
+                }
                 //文件格式
                 val fileExt = FileUtils.getFileType(file.toString())
+                println("文件格式：$fileExt")
                 withContext(Dispatchers.Main) {
                     val bool = TbsFileInterfaceImpl.canOpenFileExt(fileExt)
                     Log.d(TAG, "文件是否支持$bool  文件路径：$file $bsReaderTemp $fileExt")
