@@ -56,8 +56,6 @@ kotlin {
             implementation(project.dependencies.platform(libs.coil.bom))
             //put your multiplatform dependencies here
             implementation(libs.compose.filepicker)
-
-
             implementation(libs.coil.core)
             implementation(libs.coil.compose)
         }
@@ -69,28 +67,24 @@ kotlin {
 //            kotlin.srcDir("$outputDir/classes.jar")
         }
         androidMain.dependencies {
-            //libs/TbsFileSdk.aar
-            // aar
-            implementation( fileTree("${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk"){
+            /*implementation( fileTree("${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk"){
                 include("classes.jar")
-            } )
-//            implementation(files("src/androidMain/libs/TbsFileSdk.aar"))
-
+            } )*/
+            compileOnly(files("src/androidMain/libs/TbsFileSdk.aar"))
         }
-
     }
 }
 
-val aarFile = file("$projectDir/src/androidMain/libs/TbsFileSdk.aar")
-val outputDir = file("${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk")
-tasks.register<Copy>("extractAar") {
-    from(zipTree(aarFile))
-    into(outputDir)
-}
-// 在 preBuild 之前执行解压任务
+//val aarFile = file("$projectDir/src/androidMain/libs/TbsFileSdk.aar")
+//val outputDir = file("${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk")
+//tasks.register<Copy>("extractAar") {
+//    from(zipTree(aarFile))
+//    into(outputDir)
+//}
+/*// 在 preBuild 之前执行解压任务
 tasks.named("preBuild").configure {
     dependsOn("extractAar")
-}
+}*/
 android {
     namespace = "org.uooc.document"
     compileSdk = 34
@@ -105,8 +99,8 @@ android {
 
     sourceSets {
         getByName("main").apply {
-            res.srcDirs("src/androidMain/res","${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk/res")
-            assets.srcDir("${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk/assets")
+//            res.srcDirs("src/androidMain/res","${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk/res")
+//            assets.srcDir("${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk/assets")
         }
     }
     publishing{
