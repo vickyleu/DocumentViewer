@@ -8,7 +8,8 @@ plugins {
     id(libs.plugins.android.library.get().pluginId)
 //    alias(libs.plugins.kotlin.multiplatform)
 //    alias(libs.plugins.android.library)
-    alias(libs.plugins.jetbrains.compose)
+    id(libs.plugins.jetbrains.compose.get().pluginId)
+//    alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
 }
 

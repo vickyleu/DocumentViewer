@@ -32,7 +32,7 @@ import java.util.concurrent.Executors
 
 plugins {
 
-    alias(libs.plugins.jetbrains.compose).apply(false)
+//    alias(libs.plugins.jetbrains.compose).apply(false)
     alias(libs.plugins.compose.compiler).apply(false)
 
 //    id(libs.plugins.android.application.get().pluginId).apply(false) //.get().pluginId
@@ -87,6 +87,7 @@ buildscript {
     dependencies {
         val dokkaVersion = libs.versions.dokka.get()
         classpath("org.jetbrains.dokka:dokka-base:$dokkaVersion")
+        classpath("org.jetbrains.compose:compose-gradle-plugin:${libs.versions.compose.plugin.get()}")
     }
 }
 

@@ -56,7 +56,12 @@ object DocumentPreviewer {
 
         companion object {
             fun fromCode(code: Int): TMResult {
-                return values().find { it.code == code } ?: UNKNOWN
+                return values().find { it.code == code }?.apply {
+                    println("Found code $code ${this.message}")
+                } ?:  run{
+                    println("Unknown code $code")
+                    UNKNOWN
+                }
             }
         }
     }
