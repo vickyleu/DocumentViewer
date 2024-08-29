@@ -29,10 +29,15 @@ internal actual fun DocumentPreviewer.setupLicense(
     license: String,
     applicationContext: coil3.PlatformContext
 ) {
-    val ctx = applicationContext as Context
+    val ctx = applicationContext.applicationContext as Context
     TbsFileInterfaceImpl.setLicenseKey(license)
     TbsFileInterfaceImpl.fileEnginePreCheck(ctx)
-    val isInit = TbsFileInterfaceImpl.initEngine(ctx)
+    //初始化Engine
+    val isInit = if(TbsFileInterfaceImpl.isEngineLoaded().not()){
+        TbsFileInterfaceImpl.initEngine(ctx)
+    }else {
+        DocumentPreviewer.TMResult.SUCCESS.code
+    }
     this.currentState = DocumentPreviewer.TMResult.fromCode(isInit)
     println("TbsFileInterfaceImpl.initEngine: ${this.currentState.message}")
 }
