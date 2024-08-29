@@ -1,8 +1,11 @@
 package org.uooc.document
 
 import android.content.Context
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -45,23 +48,27 @@ internal actual fun DocumentPreviewer.documentView(
     }
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         val loadState = remember { mutableStateOf(false to "Loading document...") }
 
         val documentView = remember {
             mutableStateOf<DocumentView?>(null)
         }
-        AndroidView(
-            factory = { context ->
-                DocumentView(context).apply {
-                    documentView.value = this
-                }
-            },
-            update = {
+        Column(modifier = Modifier.fillMaxSize()) {
+            AndroidView(
+                factory = { context ->
+                    DocumentView(context).apply {
+                        documentView.value = this
+                    }
+                },
+                update = {
 
-            },
-            modifier = Modifier.fillMaxSize()
-        )
+                },
+                modifier = Modifier.fillMaxWidth()
+                    .wrapContentHeight()
+
+            )
+        }
 
         DisposableEffect(documentView.value) {
             scope.launch {

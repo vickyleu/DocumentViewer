@@ -63,8 +63,8 @@ class DocumentView @JvmOverloads constructor(
                         localBundle.putString("tempPath", bsReaderTemp)
                         localBundle.putString("fileExt", fileExt)
                         localBundle.putInt(
-                            "set_content_view_height",
-                            with(density) { height.toFloat().dp.roundToPx() })
+                            "set_content_view_width",
+                            with(density) { width.toFloat().dp.roundToPx() })
                         val ret = TbsFileInterfaceImpl.getInstance().openFileReader(
                             context, localBundle,
                             { code, args, msg ->
