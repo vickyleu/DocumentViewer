@@ -75,14 +75,23 @@ internal actual fun DocumentPreviewer.documentView(
             )
         }
 
-        DisposableEffect(documentView.value) {
+        LaunchedEffect(documentView.value) {
+            if(documentView.value==null){
+                return@LaunchedEffect
+            }
             scope.launch {
                 documentView.value?.setDocument(scope, file.value, density,this@documentView.currentState) { success, message ->
                     loadState.value = success to message
                 }
             }
+        }
+        DisposableEffect(Unit) {
+            if(documentView.value==null){
+                return@DisposableEffect onDispose {  }
+            }
             onDispose {
                 documentView.value?.dispose()
+                documentView.value = null
             }
         }
 
