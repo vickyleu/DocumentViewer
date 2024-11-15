@@ -1,6 +1,9 @@
 package org.uooc.document
 
 import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.viewinterop.AndroidView
+import coil3.Uri
 import com.github.jing332.filepicker.base.FileImpl
 import com.tencent.tbs.reader.TbsFileInterfaceImpl
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -38,6 +42,14 @@ internal actual fun DocumentPreviewer.setupLicense(
     }else {
         DocumentPreviewer.TMResult.SUCCESS.code
     }
+//    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+//        if(!Settings.System.canWrite(ctx)){
+//            val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
+//            intent.setData(android.net.Uri.parse("package:" + ctx.packageName))
+//            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+//            ctx.startActivity(intent)
+//        }
+//    }
     this.currentState = DocumentPreviewer.TMResult.fromCode(isInit)
     println("TbsFileInterfaceImpl.initEngine: ${this.currentState.message}")
 }
@@ -59,20 +71,24 @@ internal actual fun DocumentPreviewer.documentView(
         val documentView = remember {
             mutableStateOf<DocumentView?>(null)
         }
-        Column(modifier = Modifier.fillMaxSize()) {
-            AndroidView(
-                factory = { context ->
-                    DocumentView(context).apply {
-                        documentView.value = this
-                    }
-                },
-                update = {
+        with(LocalDensity.current){
+            Column(modifier = Modifier.fillMaxSize()) {
+                AndroidView(
+                    factory = { context ->
+                        DocumentView(context).apply {
+                            minimumWidth = this@BoxWithConstraints.maxWidth.roundToPx()
+                            minimumHeight = this@BoxWithConstraints.maxHeight.roundToPx()
+                            documentView.value = this
+                        }
+                    },
+                    update = {
 
-                },
-                modifier = Modifier.fillMaxWidth()
-                    .wrapContentHeight()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                        .wrapContentHeight()
 
-            )
+                )
+            }
         }
 
         LaunchedEffect(documentView.value) {
@@ -85,7 +101,7 @@ internal actual fun DocumentPreviewer.documentView(
                 }
             }
         }
-        DisposableEffect(Unit) {
+        DisposableEffect(documentView.value) {
             if(documentView.value==null){
                 return@DisposableEffect onDispose {  }
             }

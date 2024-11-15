@@ -5,7 +5,7 @@ android-compileSdk = "34"
 android-targetSdk = "34"
 
 kotlin = "2.0.20"
-compose-plugin = "1.7.0"
+compose-plugin = "1.7.1"
 androidx-activityCompose = "1.9.3"
 jetpack-compose-bom = "2024.11.00"
 coroutines-bom = "1.9.0"
@@ -13,7 +13,7 @@ coil-bom = "3.0.0"
 jvmTarget = "17"
 
 dokka = "1.9.20"
-kotlinxDatetime = "0.6.0"
+kotlinxDatetime = "0.6.1"
 navigationCompose = "2.8.3"
 
 accompanist = "0.34.0"
