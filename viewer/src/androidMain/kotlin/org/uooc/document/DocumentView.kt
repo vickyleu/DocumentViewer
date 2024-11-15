@@ -72,6 +72,48 @@ class DocumentView @JvmOverloads constructor(
                             "set_content_view_width",
                             with(density) { width.toFloat().dp.value.roundToInt() })
                         // TODO  高度目前还不确定需不需要,等腾讯回复
+                        /**
+                         * System.out               I  文件格式：pdf
+                         * DocumentPreviewer        D  文件是否支持true  文件路径：/storage/emulated/0/Android/data/uooconline.com.education/files/Documents/file_cache/temp_5474223ad190a6233f72b7f0281b96c3/舒程测试成人高考腾讯电子签模板.pdf /data/user/0/uooconline.com.education/files/file_preview/TbsReaderTemp pdf
+                         * ReaderEngine             D  createTbsReader success
+                         * DocumentPreviewer        E  文件打开回调 7000  Bundle[{typeId=0, typeDes=fileReaderOpened}]  null
+                         * beacon-thread-3          W  type=1400 audit(0.0:491547): avc: denied { read } for name="type" dev="sysfs" ino=34791 scontext=u:r:untrusted_app:s0:c203,c257,c512,c768 tcontext=u:object_r:sysfs:s0 tclass=file permissive=0
+                         * TbsReaderCore            D  OpenFile result = 0
+                         * AutofillManager          V  requestHideFillUi(null): anchor = null
+                         * System.out               I  文件格式：pdf
+                         * System.out               I  [socket]:check permission begin!
+                         * System                   W  ClassLoader referenced unknown path: system/framework/mediatek-cta.jar
+                         * System.out               I  [socket] e:java.lang.ClassNotFoundException: com.mediatek.cta.CtaUtils
+                         * DocumentPreviewer        E  文件打开回调 5030  Bundle[{name=PDFReader, version=11.6.1.1}]  null
+                         * e.com.education          W  type=1400 audit(0.0:491550): avc: granted { execute } for path="/data/data/uooconline.com.education/app_tbs/home/default/components/file/6000020/libmttpdfcore.so" dev="mmcblk0p46" ino=3558324 scontext=u:r:untrusted_app:s0:c203,c257,c512,c768 tcontext=u:object_r:app_data_file:s0:c203,c257,c512,c768 tclass=file
+                         * DocumentPreviewer        E  文件打开回调 5071  null  null
+                         * DocumentPreviewer        E  文件打开回调 5031  0  null
+                         * DocumentPreviewer        D  文件是否支持true  文件路径：/storage/emulated/0/Android/data/uooconline.com.education/files/Documents/file_cache/temp_5474223ad190a6233f72b7f0281b96c3/舒程测试成人高考腾讯电子签模板.pdf /data/user/0/uooconline.com.education/files/file_preview/TbsReaderTemp pdf
+                         * ReaderEngine             D  createTbsReader success
+                         * DocumentPreviewer        E  文件打开回调 7000  Bundle[{typeId=0, typeDes=fileReaderOpened}]  null
+                         * TbsReaderCore            D  OpenFile result = 0
+                         * DocumentPreviewer        E  文件打开回调 5030  Bundle[{name=PDFReader, version=11.6.1.1}]  null
+                         * DocumentPreviewer        E  文件打开回调 5071  null  null
+                         * DocumentPreviewer        E  文件打开回调 5031  0  null
+                         * pdfiumJni                D  initLibraryIfNeed do init
+                         * pdfiumJni                D  initLibraryIfNeed sLibraryReferenceCount=1
+                         * pdfiumJni                D  destroyLibraryIfNeed do destroy
+                         * pdfiumJni                D  destroyLibraryIfNeed sLibraryReferenceCount=0
+                         * pdfiumJni                D  initLibraryIfNeed do init
+                         * pdfiumJni                D  initLibraryIfNeed sLibraryReferenceCount=1
+                         * DocumentPreviewer        E  文件打开回调 5037  Bundle[{bflag=false}]  null
+                         * DocumentPreviewer        E  文件打开回调 19  0  null
+                         * DocumentPreviewer        E  文件打开回调 5048  Bundle[{cur_page=1, page_count=4}]  null
+                         * System.out               I  [okhttp]:check permission begin!
+                         * System                   W  ClassLoader referenced unknown path: system/framework/mediatek-cta.jar
+                         * System.out               I  [okhttp] e:java.lang.ClassNotFoundException: com.mediatek.cta.CtaUtils
+                         * System.out               I  [socket]:check permission begin!
+                         * DocumentPreviewer        E  文件打开回调 5033  null  null
+                         * DocumentPreviewer        E  文件打开回调 5024  null  Bundle[{}]
+                         * DocumentPreviewer        E  文件打开回调 12  null  null
+                         * System                   W  ClassLoader referenced unknown path: system/framework/mediatek-cta.jar
+                         * NOTIFY_CANDISPLAY        E  文件即将显示
+                         */
                         localBundle.putInt(
                             "set_content_view_height",
                             with(density) { height.toFloat().dp.value.roundToInt().coerceAtLeast(200) })
@@ -114,7 +156,11 @@ class DocumentView @JvmOverloads constructor(
                             )
                             if (ret == 0) {
                             } else {
-                                completer.complete(false to "error:$ret")
+                                if(ret==-8){
+                                    completer.complete(true to "")
+                                }else{
+                                    completer.complete(false to "error:$ret")
+                                }
                             }
                         }
                     } else {
