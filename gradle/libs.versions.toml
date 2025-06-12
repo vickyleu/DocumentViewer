@@ -1,26 +1,26 @@
 [versions]
-agp = "8.7.2"
+agp = "8.10.1"
 android-minSdk = "24"
 android-compileSdk = "34"
 android-targetSdk = "34"
 
-kotlin = "2.0.20"
-compose-plugin = "1.7.1"
-androidx-activityCompose = "1.9.3"
-jetpack-compose-bom = "2024.11.00"
-coroutines-bom = "1.9.0"
-coil-bom = "3.0.0"
+kotlin = "2.1.21"
+compose-plugin = "1.8.1"
+androidx-activityCompose = "1.10.1"
+jetpack-compose-bom = "2025.06.00"
+coroutines-bom = "1.10.2"
+coil-bom = "3.2.0"
 jvmTarget = "17"
 
-dokka = "1.9.20"
-kotlinxDatetime = "0.6.1"
-navigationCompose = "2.8.4"
+dokka = "2.0.0"
+kotlinxDatetime = "0.6.2"
+navigationCompose = "2.9.0"
 
 accompanist = "0.34.0"
 
 [libraries]
 
-compose-filepicker = { module = "com.vickyleu.filepicker:filepicker", version = "1.0.2" }
+compose-filepicker = { module = "com.vickyleu.filepicker:filepicker", version = "1.0.3" }
 
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-navigation-compose  = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }

@@ -6,10 +6,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 plugins {
     id(libs.plugins.kotlin.multiplatform.get().pluginId)
     id(libs.plugins.android.library.get().pluginId)
-//    alias(libs.plugins.kotlin.multiplatform)
-//    alias(libs.plugins.android.library)
     id(libs.plugins.jetbrains.compose.get().pluginId)
-//    alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
 }
 
@@ -50,7 +47,6 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.material)
             implementation(compose.material3)
-//            implementation(compose.components.resources)
             implementation(project.dependencies.platform(libs.compose.bom))
             implementation(project.dependencies.platform(libs.coroutines.bom))
             implementation(project.dependencies.platform(libs.coil.bom))
@@ -62,29 +58,23 @@ kotlin {
         androidMain.get().apply {
             kotlin.srcDir("src/androidMain/kotlin")
             resources.srcDir("src/androidMain/res")
-            // 添加解压后的资源和类文件
-//            resources.srcDir("$outputDir/res")
-//            kotlin.srcDir("$outputDir/classes.jar")
         }
         androidMain.dependencies {
-            /*implementation( fileTree("${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk"){
-                include("classes.jar")
-            } )*/
             compileOnly(files("src/androidMain/libs/TbsFileSdk.aar"))
         }
     }
 }
 
-//val aarFile = file("$projectDir/src/androidMain/libs/TbsFileSdk.aar")
-//val outputDir = file("${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk")
-//tasks.register<Copy>("extractAar") {
-//    from(zipTree(aarFile))
-//    into(outputDir)
-//}
-/*// 在 preBuild 之前执行解压任务
+val aarFile = file("$projectDir/src/androidMain/libs/TbsFileSdk.aar")
+val outputDir = file("${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk")
+tasks.register<Copy>("extractAar") {
+    from(zipTree(aarFile))
+    into(outputDir)
+}
+// 在 preBuild 之前执行解压任务
 tasks.named("preBuild").configure {
     dependsOn("extractAar")
-}*/
+}
 android {
     namespace = "org.uooc.document"
     compileSdk = 34
@@ -99,8 +89,8 @@ android {
 
     sourceSets {
         getByName("main").apply {
-//            res.srcDirs("src/androidMain/res","${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk/res")
-//            assets.srcDir("${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk/assets")
+            res.srcDirs("src/androidMain/res","${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk/res")
+            assets.srcDir("${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk/assets")
         }
     }
     publishing{
