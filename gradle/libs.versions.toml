@@ -1,22 +1,24 @@
 [versions]
-agp = "8.10.1"
+agp = "8.11.0"
 android-minSdk = "24"
+#noinspection GradleDependency
 android-compileSdk = "34"
+#noinspection OldTargetApi
 android-targetSdk = "34"
 
-kotlin = "2.1.21"
-compose-plugin = "1.8.1"
+kotlin = "2.2.0"
+compose-plugin = "1.8.2"
 androidx-activityCompose = "1.10.1"
-jetpack-compose-bom = "2025.06.00"
+jetpack-compose-bom = "2025.06.01"
 coroutines-bom = "1.10.2"
 coil-bom = "3.2.0"
 jvmTarget = "17"
 
 dokka = "2.0.0"
-kotlinxDatetime = "0.6.2"
-navigationCompose = "2.9.0"
+kotlinxDatetime = "0.7.0"
+navigationCompose = "2.9.1"
 
-accompanist = "0.34.0"
+accompanist = "0.37.3"
 
 [libraries]
 
