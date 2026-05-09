@@ -15,7 +15,7 @@ plugins {
 }
 
 val publishGroup = "io.github.vickyleu.documentviewer"
-val publishVersion = "2.0.0"
+val publishVersion = "2.0.1"
 val publishRepo = "DocumentViewer"
 val publishUrl = "https://github.com/vickyleu/$publishRepo"
 val publishCoordinates = mapOf(

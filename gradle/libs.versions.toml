@@ -23,7 +23,7 @@ accompanist = "0.37.3"
 
 [libraries]
 
-compose-filepicker = { module = "com.vickyleu.kmp.filepicker:filepicker", version = "2.0.0" }
+compose-filepicker = { module = "io.github.vickyleu.filepicker:filepicker", version = "2.0.0" }
 
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-navigation-compose  = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
