@@ -1,28 +1,29 @@
 [versions]
-agp = "8.11.0"
+vanniktech-maven-publish = "0.36.0"
+agp = "8.13.2"
 android-minSdk = "24"
 #noinspection GradleDependency
-android-compileSdk = "34"
+android-compileSdk = "36"
 #noinspection OldTargetApi
-android-targetSdk = "34"
+android-targetSdk = "36"
 
-kotlin = "2.2.0"
-compose-plugin = "1.8.2"
-androidx-activityCompose = "1.10.1"
-jetpack-compose-bom = "2025.06.01"
+kotlin = "2.3.21"
+compose-plugin = "1.10.3"
+androidx-activityCompose = "1.13.0"
+jetpack-compose-bom = "2026.04.01"
 coroutines-bom = "1.10.2"
-coil-bom = "3.2.0"
+coil-bom = "3.4.0"
 jvmTarget = "17"
 
-dokka = "2.0.0"
-kotlinxDatetime = "0.7.0"
-navigationCompose = "2.9.1"
+dokka = "2.2.0"
+kotlinxDatetime = "0.7.1"
+navigationCompose = "2.9.2"
 
 accompanist = "0.37.3"
 
 [libraries]
 
-compose-filepicker = { module = "com.vickyleu.filepicker:filepicker", version = "1.0.3" }
+compose-filepicker = { module = "com.vickyleu.kmp.filepicker:filepicker", version = "2.0.0" }
 
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-navigation-compose  = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
@@ -36,7 +37,9 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 
 accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist" }
 
+
 [plugins]
+vanniktech-maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech-maven-publish" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

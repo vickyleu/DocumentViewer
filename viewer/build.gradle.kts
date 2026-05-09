@@ -1,6 +1,5 @@
 @file:OptIn(ExperimentalKotlinGradlePluginApi::class)
 
-import org.jetbrains.dokka.DokkaDefaults.outputDir
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 
 plugins {
@@ -47,7 +46,6 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.material)
             implementation(compose.material3)
-            implementation(project.dependencies.platform(libs.compose.bom))
             implementation(project.dependencies.platform(libs.coroutines.bom))
             implementation(project.dependencies.platform(libs.coil.bom))
             //put your multiplatform dependencies here
@@ -77,9 +75,9 @@ tasks.named("preBuild").configure {
 }
 android {
     namespace = "org.uooc.document"
-    compileSdk = 34
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
-        minSdk = 34
+        minSdk = libs.versions.android.minSdk.get().toInt()
     }
 
     compileOptions {
@@ -91,12 +89,6 @@ android {
         getByName("main").apply {
             res.srcDirs("src/androidMain/res","${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk/res")
             assets.srcDir("${project.layout.buildDirectory.get().asFile}/expanded-aar/TbsFileSdk/assets")
-        }
-    }
-    publishing{
-        singleVariant("release"){
-            withSourcesJar()
-            withJavadocJar()
         }
     }
 }
