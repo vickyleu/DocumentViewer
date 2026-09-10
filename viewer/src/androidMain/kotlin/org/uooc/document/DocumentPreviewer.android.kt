@@ -1,9 +1,7 @@
 package org.uooc.document
 
 import android.content.Context
-import android.content.Intent
-import android.os.Build
-import android.provider.Settings
+import android.util.Log
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,13 +19,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.viewinterop.AndroidView
-import coil3.Uri
 import com.github.jing332.filepicker.base.FileImpl
 import com.tencent.tbs.reader.TbsFileInterfaceImpl
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
+private const val TAG = "DocumentPreviewer"
 
 internal actual fun DocumentPreviewer.setupLicense(
     license: String,
@@ -36,22 +34,27 @@ internal actual fun DocumentPreviewer.setupLicense(
     val ctx = applicationContext.applicationContext as Context
     TbsFileInterfaceImpl.setLicenseKey(license)
     TbsFileInterfaceImpl.fileEnginePreCheck(ctx)
-    //初始化Engine
-    val isInit = if(TbsFileInterfaceImpl.isEngineLoaded().not()){
+
+    val initCode = if (!TbsFileInterfaceImpl.isEngineLoaded()) {
         TbsFileInterfaceImpl.initEngine(ctx)
-    }else {
+    } else {
         DocumentPreviewer.TMResult.SUCCESS.code
     }
-//    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-//        if(!Settings.System.canWrite(ctx)){
-//            val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
-//            intent.setData(android.net.Uri.parse("package:" + ctx.packageName))
-//            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-//            ctx.startActivity(intent)
-//        }
-//    }
-    this.currentState = DocumentPreviewer.TMResult.fromCode(isInit)
-    println("TbsFileInterfaceImpl.initEngine: ${this.currentState.message}")
+
+    this.currentStateCode = initCode
+    this.currentState = DocumentPreviewer.TMResult.fromCode(initCode)
+
+    val message = if (initCode == DocumentPreviewer.TMResult.SUCCESS.code) {
+        "TbsFile initEngine success(package=${ctx.packageName})"
+    } else {
+        "${DocumentPreviewer.TMResult.diagnosticMessage(initCode, this.currentState)}, package=${ctx.packageName}"
+    }
+
+    if (initCode == DocumentPreviewer.TMResult.SUCCESS.code) {
+        Log.i(TAG, message)
+    } else {
+        Log.e(TAG, message)
+    }
 }
 
 
@@ -71,7 +74,7 @@ internal actual fun DocumentPreviewer.documentView(
         val documentView = remember {
             mutableStateOf<DocumentView?>(null)
         }
-        with(LocalDensity.current){
+        with(LocalDensity.current) {
             Column(modifier = Modifier.fillMaxSize()) {
                 AndroidView(
                     factory = { context ->
@@ -82,28 +85,32 @@ internal actual fun DocumentPreviewer.documentView(
                         }
                     },
                     update = {
-
                     },
                     modifier = Modifier.fillMaxWidth()
                         .wrapContentHeight()
-
                 )
             }
         }
 
         LaunchedEffect(documentView.value) {
-            if(documentView.value==null){
+            if (documentView.value == null) {
                 return@LaunchedEffect
             }
             scope.launch {
-                documentView.value?.setDocument(scope, file.value, density,this@documentView.currentState) { success, message ->
+                documentView.value?.setDocument(
+                    scope,
+                    file.value,
+                    density,
+                    this@documentView.currentState,
+                    this@documentView.currentStateCode
+                ) { success, message ->
                     loadState.value = success to message
                 }
             }
         }
         DisposableEffect(documentView.value) {
-            if(documentView.value==null){
-                return@DisposableEffect onDispose {  }
+            if (documentView.value == null) {
+                return@DisposableEffect onDispose { }
             }
             onDispose {
                 documentView.value?.dispose()
@@ -111,12 +118,12 @@ internal actual fun DocumentPreviewer.documentView(
             }
         }
 
-        if (loadState.value.first.not()) {
+        if (!loadState.value.first) {
             Text(
                 text = loadState.value.second.let {
-                    if(it.contains("未设置 licenseKey")){
+                    if (it.contains("未设置 licenseKey")) {
                         "tbs未充值,请联系管理员"
-                    }else{
+                    } else {
                         it
                     }
                 },
@@ -127,10 +134,9 @@ internal actual fun DocumentPreviewer.documentView(
             snapshotFlow { loadState.value }
                 .drop(1)
                 .distinctUntilChanged()
-                .collect{
-                    callback(it.first,it.second)
+                .collect {
+                    callback(it.first, it.second)
                 }
         }
-
     }
 }
