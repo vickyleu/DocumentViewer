@@ -8,7 +8,6 @@ import android.util.Log
 import android.view.ViewTreeObserver
 import android.widget.FrameLayout
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.dp
 import com.github.jing332.filepicker.base.FileImpl
 import com.tencent.tbs.reader.ITbsReader
 import com.tencent.tbs.reader.TbsFileInterfaceImpl
@@ -18,139 +17,177 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.math.roundToInt
 
-private val TAG = "DocumentPreviewer"
+private const val TAG = "DocumentPreviewer"
 
 class DocumentView @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null
+    context: Context,
+    attrs: AttributeSet? = null,
 ) : FrameLayout(context, attrs) {
     private lateinit var currentState: DocumentPreviewer.TMResult
+
+    @Suppress("UNUSED_PARAMETER")
     suspend fun setDocument(
         scope: CoroutineScope,
         file: FileImpl,
         density: Density,
         currentState: DocumentPreviewer.TMResult,
-        callback: (Boolean, String) -> Unit
+        callback: (Boolean, String) -> Unit,
     ) {
         this.currentState = currentState
         val completer = CompletableDeferred<Pair<Boolean, String>>()
+
         scope.launch {
-            withContext(Dispatchers.IO) {
-                //增加下面一句解决没有TbsReaderTemp文件夹存在导致加载文件失败
-                val bsReaderTemp =
-                    FileUtils.getDir(context).toString() + File.separator + "TbsReaderTemp"
-                val bsReaderTempFile = File(bsReaderTemp)
-                if (!bsReaderTempFile.exists()) {
-                    val mkdir: Boolean = bsReaderTempFile.mkdir()
-                    if (!mkdir) {
-                        Log.e(TAG, "创建$bsReaderTemp 失败")
-                        completer.complete(false to "TbsReaderTemp缓存文件创建失败")
+            try {
+                withContext(Dispatchers.IO) {
+                    val tbsReaderTemp = File(FileUtils.getDir(context), "TbsReaderTemp")
+                    if (!tbsReaderTemp.exists() && !tbsReaderTemp.mkdirs()) {
+                        Log.e(TAG, "Failed to create TBS temp directory: $tbsReaderTemp")
+                        completeOnce(completer, false, "TbsReaderTemp缓存文件创建失败")
                         return@withContext
                     }
-                }
-                if (this@DocumentView.currentState.code != 0) {
-                    completer.complete(false to "TbsFile Engine初始化失败")
-                    return@withContext
-                }
-                //文件格式
-                val fileExt = FileUtils.getFileType(file.toString())
-                println("文件格式：$fileExt")
 
+                    if (this@DocumentView.currentState != DocumentPreviewer.TMResult.SUCCESS) {
+                        val initCode = DocumentPreviewer.currentInitCode
+                        completeOnce(
+                            completer,
+                            false,
+                            DocumentPreviewer.describeInitResult(initCode),
+                        )
+                        return@withContext
+                    }
 
-                withContext(Dispatchers.Main) {
-                    val bool = TbsFileInterfaceImpl.canOpenFileExt(fileExt)
-                    Log.d(TAG, "文件是否支持$bool  文件路径：$file $bsReaderTemp $fileExt")
-                    if (bool) {
-                        //加载文件
-                        val localBundle = Bundle()
-                        localBundle.putString("filePath", file.absolutePath.toString())
-                        localBundle.putString("tempPath", bsReaderTemp)
-                        localBundle.putString("fileExt", fileExt)
+                    val fileExt = FileUtils.getFileType(file.toString())
+                    Log.d(TAG, "Opening document: ext=$fileExt")
 
-                        localBundle.putInt(
-                            "set_content_view_width",
-                            with(density) { measuredWidth.toFloat().dp.value.roundToInt() })
-//                        localBundle.putBoolean("file_reader_stream_mode", false)//设置为文件流打开模式
-                        localBundle.putInt(
-                            "set_content_view_height",
-                            with(density) {
-                                measuredHeight.toFloat().dp.value.roundToInt().coerceAtLeast(200)
-                            })
+                    withContext(Dispatchers.Main) {
+                        if (!TbsFileInterfaceImpl.canOpenFileExt(fileExt)) {
+                            Log.e(TAG, "TBS cannot open extension: $fileExt")
+                            completeOnce(completer, false, "文件格式不支持或者打开失败: $fileExt")
+                            return@withContext
+                        }
+
+                        val localBundle = Bundle().apply {
+                            putString("filePath", file.absolutePath.toString())
+                            putString("tempPath", tbsReaderTemp.absolutePath)
+                            putString("fileExt", fileExt)
+                            // These values are pixels already. Converting px -> dp -> numeric px was incorrect.
+                            putInt("set_content_view_width", measuredWidth.coerceAtLeast(1))
+                            putInt("set_content_view_height", measuredHeight.coerceAtLeast(200))
+                        }
+
                         this@DocumentView.post {
-                            val ret = TbsFileInterfaceImpl.getInstance().openFileReader(
-                                context, localBundle,
-                                { code, args, msg ->
-                                    Log.e(TAG, "文件打开回调 $code  $args  $msg")
-                                    when (code) {
-                                        ITbsReader.OPEN_FILEREADER_STATUS_UI_CALLBACK -> {
-                                            if (args is Bundle) {
-                                                val id = args.getInt("typeId", 0)
-                                                val typeDes =
-                                                    args.getString("typeDes", "fileReaderOpened")
-                                                if (ITbsReader.TBS_READER_TYPE_STATUS_UI_OPENED == id) {
-                                                    //加密文档弹框取消需关闭activity
-//                                                Navigation.findNavController(getView()).popBackStack()
-
-                                                } else if (ITbsReader.TBS_READER_TYPE_STATUS_UI_SHUTDOWN == id) {
-                                                    //加密文档弹框取消需关闭activity
-//                                                Navigation.findNavController(getView()).popBackStack()
-                                                    if (completer.isCompleted.not()) {
-                                                        completer.complete(false to "文件打开2失败:${msg}")
+                            try {
+                                val ret = TbsFileInterfaceImpl.getInstance().openFileReader(
+                                    context,
+                                    localBundle,
+                                    { code, args, msg ->
+                                        Log.d(TAG, "TBS open callback code=$code, message=$msg")
+                                        when (code) {
+                                            ITbsReader.OPEN_FILEREADER_STATUS_UI_CALLBACK -> {
+                                                if (args is Bundle) {
+                                                    val id = args.getInt("typeId", 0)
+                                                    if (ITbsReader.TBS_READER_TYPE_STATUS_UI_SHUTDOWN == id) {
+                                                        completeOnce(
+                                                            completer,
+                                                            false,
+                                                            "文件阅读器已关闭${msg?.takeIf { it.isNotBlank() }?.let { ": $it" } ?: ""}",
+                                                        )
                                                     }
-                                                }
-                                            } else {
-                                                if (completer.isCompleted.not()) {
-                                                    completer.complete(false to "文件打开3失败:${msg}")
+                                                } else {
+                                                    completeOnce(
+                                                        completer,
+                                                        false,
+                                                        "文件阅读器状态异常${msg?.takeIf { it.isNotBlank() }?.let { ": $it" } ?: ""}",
+                                                    )
                                                 }
                                             }
-                                        }
 
-                                        ITbsReader.NOTIFY_CANDISPLAY -> {
-                                            //文件即将显示
-                                            Log.wtf("NOTIFY_CANDISPLAY", "文件即将显示")
-                                            completer.complete(true to "")
+                                            ITbsReader.NOTIFY_CANDISPLAY -> {
+                                                completeOnce(completer, true, "")
+                                            }
                                         }
+                                    },
+                                    this@DocumentView,
+                                )
 
-                                        else -> Unit
-                                    }
-                                }, this@DocumentView
-                            )
-                            if (ret == 0) {
-                            } else {
-                                completer.complete(false to "error:$ret")
+                                if (ret != 0) {
+                                    completeOnce(
+                                        completer,
+                                        false,
+                                        describeOpenReaderFailure(ret),
+                                    )
+                                }
+                            } catch (t: Throwable) {
+                                Log.e(TAG, "TBS openFileReader threw", t)
+                                completeOnce(
+                                    completer,
+                                    false,
+                                    "TbsFile 打开文件异常: ${t.message ?: t::class.simpleName}",
+                                )
                             }
                         }
-                    } else {
-                        Log.e(TAG, "文件打开失败！文件格式暂不支持")
-                        completer.complete(false to "文件格式不支持或者打开失败")
                     }
                 }
+            } catch (t: Throwable) {
+                Log.e(TAG, "Document preparation failed", t)
+                completeOnce(
+                    completer,
+                    false,
+                    "文档预览初始化异常: ${t.message ?: t::class.simpleName}",
+                )
             }
         }
-        val (rlt, msg) = completer.await()
-        callback.invoke(rlt, msg)
+
+        val (result, message) = completer.await()
+        callback(result, message)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration?) {
         super.onConfigurationChanged(newConfig)
-        this.getViewTreeObserver().addOnGlobalLayoutListener(object :
-            ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                this@DocumentView.getViewTreeObserver().removeOnGlobalLayoutListener(this)
-                val w: Int = this@DocumentView.width
-                val h: Int = this@DocumentView.height
-                TbsFileInterfaceImpl.getInstance().onSizeChanged(w, h)
-            }
-        })
+        viewTreeObserver.addOnGlobalLayoutListener(
+            object : ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    TbsFileInterfaceImpl.getInstance().onSizeChanged(width, height)
+                }
+            },
+        )
     }
 
     fun dispose() {
         try {
-            this.removeAllViews()
-            val instance = TbsFileInterfaceImpl.getInstance()
-            instance.closeFileReader()
-        } catch (ignore: Exception) {
+            TbsFileInterfaceImpl.getInstance().closeFileReader()
+        } catch (t: Throwable) {
+            Log.w(TAG, "TBS closeFileReader failed", t)
+        } finally {
+            removeAllViews()
         }
+    }
+
+    private fun completeOnce(
+        completer: CompletableDeferred<Pair<Boolean, String>>,
+        success: Boolean,
+        message: String,
+    ) {
+        if (!completer.isCompleted) {
+            completer.complete(success to message)
+        }
+    }
+
+    private fun describeOpenReaderFailure(code: Int): String {
+        val reason =
+            when (code) {
+                -1 -> "参数错误"
+                -2 -> "Reader 尚未加载"
+                -3 -> "鉴权失败"
+                -4 -> "Engine 正在加载"
+                -5 -> "阅读器 View 初始化失败"
+                -6 -> "文件格式不支持"
+                -7 -> "Reader 入口正在异步加载"
+                -8 -> "TBS Core 正在下载或尚未就绪"
+                else -> "未知错误"
+            }
+        return "TbsFile 打开文件失败 (code=$code, reason=$reason)"
     }
 }
