@@ -38,7 +38,6 @@ internal actual fun DocumentPreviewer.setupLicense(
                 DocumentPreviewer.TMResult.UNSET.code
             } else {
                 TbsFileInterfaceImpl.setLicenseKey(license)
-                TbsFileInterfaceImpl.fileEnginePreCheck(ctx)
                 if (TbsFileInterfaceImpl.isEngineLoaded()) {
                     DocumentPreviewer.TMResult.SUCCESS.code
                 } else {
@@ -111,7 +110,6 @@ internal actual fun DocumentPreviewer.documentView(
         }
 
         if (!loadState.value.first) {
-            // Do not translate a missing/mismatched license into "not recharged"; those are different failures.
             Text(
                 text = loadState.value.second,
                 modifier = Modifier.align(Alignment.Center),
