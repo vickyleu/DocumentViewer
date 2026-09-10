@@ -1,9 +1,7 @@
 package org.uooc.document
 
 import android.content.Context
-import android.content.Intent
-import android.os.Build
-import android.provider.Settings
+import android.util.Log
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,57 +19,63 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.viewinterop.AndroidView
-import coil3.Uri
 import com.github.jing332.filepicker.base.FileImpl
 import com.tencent.tbs.reader.TbsFileInterfaceImpl
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
+private const val TAG = "DocumentPreviewer"
 
 internal actual fun DocumentPreviewer.setupLicense(
     license: String,
-    applicationContext: coil3.PlatformContext
+    applicationContext: coil3.PlatformContext,
 ) {
     val ctx = applicationContext.applicationContext as Context
-    TbsFileInterfaceImpl.setLicenseKey(license)
-    TbsFileInterfaceImpl.fileEnginePreCheck(ctx)
-    //初始化Engine
-    val isInit = if(TbsFileInterfaceImpl.isEngineLoaded().not()){
-        TbsFileInterfaceImpl.initEngine(ctx)
-    }else {
-        DocumentPreviewer.TMResult.SUCCESS.code
-    }
-//    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-//        if(!Settings.System.canWrite(ctx)){
-//            val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
-//            intent.setData(android.net.Uri.parse("package:" + ctx.packageName))
-//            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-//            ctx.startActivity(intent)
-//        }
-//    }
-    this.currentState = DocumentPreviewer.TMResult.fromCode(isInit)
-    println("TbsFileInterfaceImpl.initEngine: ${this.currentState.message}")
-}
+    val initCode =
+        try {
+            if (license.isBlank()) {
+                DocumentPreviewer.TMResult.UNSET.code
+            } else {
+                TbsFileInterfaceImpl.setLicenseKey(license)
+                TbsFileInterfaceImpl.fileEnginePreCheck(ctx)
+                if (TbsFileInterfaceImpl.isEngineLoaded()) {
+                    DocumentPreviewer.TMResult.SUCCESS.code
+                } else {
+                    TbsFileInterfaceImpl.initEngine(ctx)
+                }
+            }
+        } catch (t: Throwable) {
+            Log.e(TAG, "TbsFile initEngine threw an exception for package=${ctx.packageName}", t)
+            DocumentPreviewer.TMResult.UNKNOWN.code
+        }
 
+    this.currentInitCode = initCode
+    this.currentState = DocumentPreviewer.TMResult.fromCode(initCode)
+    Log.i(
+        TAG,
+        "TbsFile initEngine package=${ctx.packageName}, code=$initCode, " +
+            "state=${this.currentState.name}, engineLoaded=${runCatching { TbsFileInterfaceImpl.isEngineLoaded() }.getOrDefault(false)}",
+    )
+}
 
 @Composable
 internal actual fun DocumentPreviewer.documentView(
     document: FileImpl,
-    callback: (Boolean, String) -> Unit
+    callback: (Boolean, String) -> Unit,
 ) {
-    val file = remember {
-        mutableStateOf(document)
-    }
+    val file = remember { mutableStateOf(document) }
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
-    BoxWithConstraints(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        val loadState = remember { mutableStateOf(false to "Loading document...") }
 
-        val documentView = remember {
-            mutableStateOf<DocumentView?>(null)
-        }
-        with(LocalDensity.current){
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        val loadState = remember { mutableStateOf(false to "Loading document...") }
+        val documentView = remember { mutableStateOf<DocumentView?>(null) }
+
+        with(LocalDensity.current) {
             Column(modifier = Modifier.fillMaxSize()) {
                 AndroidView(
                     factory = { context ->
@@ -81,29 +85,24 @@ internal actual fun DocumentPreviewer.documentView(
                             documentView.value = this
                         }
                     },
-                    update = {
-
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                        .wrapContentHeight()
-
+                    update = {},
+                    modifier = Modifier.fillMaxWidth().wrapContentHeight(),
                 )
             }
         }
 
         LaunchedEffect(documentView.value) {
-            if(documentView.value==null){
-                return@LaunchedEffect
-            }
+            val view = documentView.value ?: return@LaunchedEffect
             scope.launch {
-                documentView.value?.setDocument(scope, file.value, density,this@documentView.currentState) { success, message ->
+                view.setDocument(scope, file.value, density, this@documentView.currentState) { success, message ->
                     loadState.value = success to message
                 }
             }
         }
+
         DisposableEffect(documentView.value) {
-            if(documentView.value==null){
-                return@DisposableEffect onDispose {  }
+            if (documentView.value == null) {
+                return@DisposableEffect onDispose {}
             }
             onDispose {
                 documentView.value?.dispose()
@@ -111,26 +110,21 @@ internal actual fun DocumentPreviewer.documentView(
             }
         }
 
-        if (loadState.value.first.not()) {
+        if (!loadState.value.first) {
+            // Do not translate a missing/mismatched license into "not recharged"; those are different failures.
             Text(
-                text = loadState.value.second.let {
-                    if(it.contains("未设置 licenseKey")){
-                        "tbs未充值,请联系管理员"
-                    }else{
-                        it
-                    }
-                },
-                modifier = Modifier.align(Alignment.Center)
+                text = loadState.value.second,
+                modifier = Modifier.align(Alignment.Center),
             )
         }
+
         LaunchedEffect(Unit) {
             snapshotFlow { loadState.value }
                 .drop(1)
                 .distinctUntilChanged()
-                .collect{
-                    callback(it.first,it.second)
+                .collect {
+                    callback(it.first, it.second)
                 }
         }
-
     }
 }
