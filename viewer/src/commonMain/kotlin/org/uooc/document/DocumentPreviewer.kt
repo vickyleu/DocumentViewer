@@ -6,44 +6,44 @@ import com.github.jing332.filepicker.base.FileImpl
 object DocumentPreviewer {
     var currentState = TMResult.UNKNOWN
         internal set
+
+    /**
+     * Raw return value from TbsFileInterfaceImpl.initEngine().
+     * Keep this separately because UNKNOWN must not hide an unrecognised SDK error code.
+     */
+    var currentStateCode: Int = TMResult.UNKNOWN.code
+        internal set
+
     @Composable
-    fun previewDocument(document: FileImpl,callback: (Boolean, String) -> Unit) {
+    fun previewDocument(document: FileImpl, callback: (Boolean, String) -> Unit) {
         println("Previewing document at ${document.getAbsolutePath()}")
-        documentView(document,callback)
+        documentView(document, callback)
     }
 
     fun setup(license: String, applicationContext: coil3.PlatformContext) {
-        println("Setting up document previewer with license $license")
+        // Do not print the license key. It is a credential and may end up in CI/logcat logs.
+        println("Setting up document previewer (licenseConfigured=${license.isNotBlank()})")
         setupLicense(license, applicationContext)
     }
 
 
     /**
      * 初始化接口错误码
-     * intEngine 接口错误码为方法返回值。
+     * initEngine 接口错误码为方法返回值。
      * initEngineAsync 接口错误码为回调 actionType == ITbsReader.OPEN_FILEREADER_ASYNC_LOAD_READER_ENTRY_CALLBACK 时 args 的值。
-     * 错误码
-     * 说明
-     * 102
-     * 未设置 licenseKey。
-     * 202
-     * 请检查调用接口是否正确，应调用 setLicenseKey 接口而不是 setLicense 接口。
-     * 103 、305
-     * 1. 请检查设备网络是否连通。
-     * 2. 尝试切换网络。
-     * 212、322
-     * 调用量包次数用完。
-     * 4001
-     * licenseKey 不存在，请检查设置的 licenseKey 是否正确。
-     * 4002
-     * 客户端包名和 licenseKey 不匹配。
      *
-     *
-     *
+     * 102: 未设置 licenseKey。
+     * 202: 请检查调用接口是否正确，应调用 setLicenseKey 接口而不是 setLicense 接口。
+     * 209: licenseKey 不匹配，需要检查 licenseKey 是否正确。
+     * 103、305: 请检查设备网络是否连通，并尝试切换网络。
+     * 212、322: 调用量包次数用完。
+     * 4001: licenseKey 不存在，请检查设置的 licenseKey 是否正确。
+     * 4002: 客户端包名和 licenseKey 不匹配。
      */
     enum class TMResult(val code: Int = 0, val message: String = "") {
         SUCCESS(0, "Success"),
-        MISMATCH(4002, "License key mismatch"),
+        // Keep the existing enum name for source compatibility; the documented code is 209.
+        MISMATCH(209, "License key mismatch"),
         UNSET(102, "Unset license key"),
         CHECK(202, "Check if the interface is called correctly, should call setLicenseKey instead of setLicense"),
         NETWORK_MAYBE1(103, "Check if the device network is connected, try switching networks"),
@@ -58,10 +58,14 @@ object DocumentPreviewer {
             fun fromCode(code: Int): TMResult {
                 return values().find { it.code == code }?.apply {
                     println("Found code $code ${this.message}")
-                } ?:  run{
+                } ?: run {
                     println("Unknown code $code")
                     UNKNOWN
                 }
+            }
+
+            fun diagnosticMessage(code: Int, state: TMResult = fromCode(code)): String {
+                return "TbsFile Engine初始化失败(code=$code, state=${state.name}): ${state.message}"
             }
         }
     }
