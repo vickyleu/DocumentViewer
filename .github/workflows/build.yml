@@ -1,0 +1,20 @@
+name: Build viewer
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - fix/tbs-sdk-1.0.8.6000124
+
+jobs:
+  build-viewer:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: corretto
+          java-version: '17'
+      - name: Build viewer
+        shell: bash
+        run: ./gradlew :viewer:assemble --stacktrace --console=plain
