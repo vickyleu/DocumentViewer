@@ -36,10 +36,12 @@ dependencyResolutionManagement {
     }
 }
 
-
-includeBuild("../ComposeFilePicker") {
-    dependencySubstitution {
-        substitute(module("com.vickyleu.kmp.filepicker:filepicker")).using(project(":filePicker"))
+val composeFilePickerDir = file("../ComposeFilePicker")
+if (composeFilePickerDir.isDirectory) {
+    includeBuild(composeFilePickerDir) {
+        dependencySubstitution {
+            substitute(module("io.github.vickyleu.filepicker:filepicker")).using(project(":filePicker"))
+        }
     }
 }
 
